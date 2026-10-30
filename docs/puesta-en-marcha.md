@@ -5,7 +5,8 @@ Rumbo 90 corre como web app en la nube: **Supabase** (base de datos y login con 
 ## 1. Supabase
 
 1. Crear un proyecto en <https://supabase.com/dashboard> (región sugerida: São Paulo).
-2. En **SQL Editor**, pegar y ejecutar `supabase/migrations/0001_esquema_inicial.sql`.
+2. En **Project Settings → Integrations → GitHub**, conectar el repositorio con *Working directory* `.`, activar **Deploy to production** y poner `main` como *Production branch*. Cada merge a `main` aplica las migraciones de `supabase/migrations`.
+   - No ejecutar esas migraciones a mano en el SQL Editor: la integración intentaría aplicarlas de nuevo y fallaría.
 3. En **Project Settings → API**, copiar `Project URL` y la clave `anon public`.
 
 ## 2. Login con Google
