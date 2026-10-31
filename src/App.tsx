@@ -9,6 +9,7 @@ import HabitoForm from './pages/HabitoForm'
 import Habitos from './pages/Habitos'
 import Hoy from './pages/Hoy'
 import Login from './pages/Login'
+import Logros from './pages/Logros'
 import Metas from './pages/Metas'
 import ObjetivoDetalle from './pages/ObjetivoDetalle'
 import ObjetivoForm from './pages/ObjetivoForm'
@@ -36,6 +37,7 @@ function AppConSesion() {
             <Route path="habitos" element={<Habitos ciclo={ciclo} />} />
             <Route path="habitos/nuevo" element={<HabitoForm ciclo={ciclo} />} />
             <Route path="habitos/:id" element={<HabitoForm ciclo={ciclo} />} />
+            <Route path="logros" element={<Logros ciclo={ciclo} />} />
           </>
         ) : (
           <Route index element={<Bienvenida alCrear={() => void recargar()} />} />

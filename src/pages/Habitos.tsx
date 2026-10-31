@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { HABITO_CAMPOS, describirFrecuencia, describirLimite, type Ciclo, type Habito } from '../lib/datos'
+import { SUGERENCIAS, linkSugerencia } from '../lib/sugerencias'
 import { supabase } from '../lib/supabase'
 
 const SECCIONES = [
@@ -22,6 +23,7 @@ const SECCIONES = [
 
 export default function Habitos({ ciclo }: { ciclo: Ciclo }) {
   const [habitos, setHabitos] = useState<Habito[]>([])
+  const [verIdeas, setVerIdeas] = useState<'construir' | 'reducir' | null>(null)
 
   useEffect(() => {
     supabase
@@ -71,6 +73,44 @@ export default function Habitos({ ciclo }: { ciclo: Ciclo }) {
           </section>
         )
       })}
+
+      <section className="mt-8 rounded-xl border border-slate-800 p-4">
+        <h2 className="font-semibold">Ideas para sumar o dejar</h2>
+        <p className="mt-1 text-sm text-slate-400">Tocá una idea para cargarla ya armada. Después la ajustás a tu medida.</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          {(
+            [
+              ['construir', 'Hábitos para sumar', 'border-emerald-500 text-emerald-400'],
+              ['reducir', 'Hábitos para dejar', 'border-rose-400 text-rose-300'],
+            ] as const
+          ).map(([t, etiqueta, activa]) => (
+            <button
+              key={t}
+              onClick={() => setVerIdeas((v) => (v === t ? null : t))}
+              className={`rounded-lg border px-3 py-2 ${verIdeas === t ? `${activa} font-semibold` : 'border-slate-700 text-slate-400'}`}
+            >
+              {etiqueta}
+            </button>
+          ))}
+        </div>
+        {verIdeas && (
+          <ul className="mt-3 space-y-2">
+            {SUGERENCIAS.filter(
+              (x) => x.tipo === verIdeas && !habitos.some((h) => h.titulo.toLowerCase() === x.titulo.toLowerCase()),
+            ).map((x) => (
+              <li key={x.titulo}>
+                <Link to={linkSugerencia(x)} className="block rounded-lg border border-slate-800 p-3 active:bg-slate-900">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{x.titulo}</span>
+                    <span className="shrink-0 text-xs text-slate-500">{x.area}</span>
+                  </span>
+                  <span className="block text-sm text-slate-400">{x.porque}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   )
 }

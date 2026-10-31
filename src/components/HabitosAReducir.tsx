@@ -13,7 +13,7 @@ function semaforo(n: number, limite: number) {
 }
 
 /** Hábitos malos: contador semanal contra el límite, días sin caer y tendencia de las semanas anteriores */
-export default function HabitosAReducir({ habitos }: { habitos: Habito[] }) {
+export default function HabitosAReducir({ habitos, alCambiar }: { habitos: Habito[]; alCambiar?: () => void }) {
   const [registros, setRegistros] = useState<RegistroHabito[]>([])
   const hoy = fechaISO()
   const lunes = inicioSemana()
@@ -40,12 +40,14 @@ export default function HabitosAReducir({ habitos }: { habitos: Habito[] }) {
     setRegistros((r) => [...r, nuevo])
     await supabase.from('registros_habito').insert({ client_id: crypto.randomUUID(), habito_id: h.id, fecha: hoy })
     void cargar()
+    alCambiar?.()
   }
 
   const deshacer = async (ultimoDeHoy: RegistroHabito) => {
     setRegistros((r) => r.filter((x) => x.id !== ultimoDeHoy.id))
     await supabase.from('registros_habito').delete().eq('id', ultimoDeHoy.id)
     void cargar()
+    alCambiar?.()
   }
 
   if (habitos.length === 0) return null
