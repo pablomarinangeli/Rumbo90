@@ -26,13 +26,70 @@ export interface Dimension {
   orden: number
 }
 
+export type Frecuencia = { tipo: 'dias'; dias: number[] } | { tipo: 'veces_semana'; veces: number }
+
 export interface Habito {
   id: string
   titulo: string
-  frecuencia: { tipo: 'dias'; dias: number[] } | { tipo: 'veces_semana'; veces: number }
+  frecuencia: Frecuencia
   hora: string | null
   duracion_min: number | null
   version_minima: string | null
+  activo: boolean
+}
+
+export type EstadoCompromiso = 'pendiente' | 'realizado' | 'parcial' | 'reprogramado' | 'omitido' | 'cancelado'
+
+export interface Compromiso {
+  id: string
+  client_id: string
+  fecha: string
+  titulo: string
+  habito_id: string | null
+  estado: EstadoCompromiso
+  motivo: string | null
+}
+
+export interface Medicion {
+  id: string
+  objetivo_id: string
+  fecha: string
+  valor: number
+  unidad: string | null
+  nota: string | null
+}
+
+export interface Hito {
+  id: string
+  objetivo_id: string
+  titulo: string
+  fecha: string | null
+  estado: 'pendiente' | 'en_curso' | 'hecho' | 'bloqueado'
+  orden: number
+}
+
+export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo'
+export const OBJETIVO_CAMPOS =
+  'id, codigo, titulo, descripcion, tipo, unidad, valor_inicial, valor_meta, dimension_id'
+
+/** Fecha local en formato AAAA-MM-DD (en-CA usa ese formato) */
+export function fechaISO(fecha = new Date()) {
+  return fecha.toLocaleDateString('en-CA')
+}
+
+export const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
+export function describirFrecuencia(f: Frecuencia) {
+  if (f.tipo === 'veces_semana') return `${f.veces} ${f.veces === 1 ? 'vez' : 'veces'} por semana`
+  if (f.dias.length === 7) return 'Todos los días'
+  return [...f.dias].sort((a, b) => ((a + 6) % 7) - ((b + 6) % 7)).map((d) => DIAS_CORTOS.at(d)).join(' · ')
+}
+
+export const TIPOS_OBJETIVO: Record<Objetivo['tipo'], string> = {
+  meta_numerica: 'Meta numérica (ej. peso)',
+  conteo: 'Conteo (ej. libros terminados)',
+  promedio: 'Promedio (ej. horas por semana)',
+  proyecto: 'Proyecto con hitos',
 }
 
 /** Ciclo activo más reciente del usuario, o null si todavía no creó ninguno */

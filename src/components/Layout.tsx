@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 const secciones = [
   { to: '/', etiqueta: 'Hoy' },
   { to: '/metas', etiqueta: 'Metas' },
+  { to: '/habitos', etiqueta: 'Hábitos' },
   { to: '/revision', etiqueta: 'Revisión' },
   { to: '/ajustes', etiqueta: 'Ajustes' },
 ]
@@ -17,12 +18,12 @@ export default function Layout() {
         className="fixed inset-x-0 bottom-0 border-t border-slate-800 bg-slate-950/95 backdrop-blur"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <ul className="mx-auto grid max-w-2xl grid-cols-4">
+        <ul className="mx-auto grid max-w-2xl grid-cols-5">
           {secciones.map((s) => (
             <li key={s.to}>
               <NavLink
                 to={s.to}
-                end
+                end={s.to === '/'}
                 className={({ isActive }) =>
                   `block py-4 text-center text-sm ${isActive ? 'font-semibold text-emerald-400' : 'text-slate-400'}`
                 }
