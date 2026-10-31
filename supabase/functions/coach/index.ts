@@ -9,7 +9,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-const MODELO = 'claude-opus-5-5'
+const MODELO = 'claude-haiku-5-5'
 const MAX_MENSAJES = 60
 const MAX_CARACTERES_MENSAJE = 4000
 const MAX_CARACTERES_CONTEXTO = 6000
@@ -71,7 +71,7 @@ const HABITO_SCHEMA = {
   },
 }
 
-const HERRAMIENTAS: Anthropic.Beta.BetaTool[] = [
+const HERRAMIENTAS: Anthropic.Tool[] = [
   {
     name: 'proponer_metas',
     description:
@@ -108,7 +108,7 @@ const responder = (cuerpo: unknown, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { ...CORS, 'Content-Type': 'application/json' } })
 
 /** Solo deja pasar mensajes con la forma que arma la app */
-function mensajesValidos(mensajes: unknown): mensajes is Anthropic.Beta.BetaMessageParam[] {
+function mensajesValidos(mensajes: unknown): mensajes is Anthropic.MessageParam[] {
   if (!Array.isArray(mensajes) || mensajes.length === 0 || mensajes.length > MAX_MENSAJES) return false
   return mensajes.every((m) => {
     if (!m || (m.role !== 'user' && m.role !== 'assistant')) return false
@@ -154,11 +154,9 @@ Deno.serve(async (req) => {
 
   const anthropic = new Anthropic() // lee ANTHROPIC_API_KEY
   try {
-    const respuesta = await anthropic.beta.messages.create({
+    const respuesta = await anthropic.messages.create({
       model: MODELO,
       max_tokens: 16000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
       output_config: { effort: 'medium' },
       system: [
         { type: 'text', text: SISTEMA, cache_control: { type: 'ephemeral' } },

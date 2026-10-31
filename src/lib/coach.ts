@@ -1,10 +1,10 @@
 import type Anthropic from '@anthropic-ai/sdk'
 import { supabase } from './supabase'
 
-export type MensajeCoach = Anthropic.Beta.BetaUserMessageParam | Anthropic.Beta.BetaAssistantMessageParam
-export type BloqueCoach = Anthropic.Beta.BetaContentBlock
-export type BloquesUsuario = Exclude<Anthropic.Beta.BetaUserMessageParam['content'], string>
-export type BloquesCoach = Exclude<Anthropic.Beta.BetaAssistantMessageParam['content'], string>
+export type MensajeCoach = Anthropic.UserMessageParam | Anthropic.AssistantMessageParam
+export type BloqueCoach = Anthropic.ContentBlock
+export type BloquesUsuario = Exclude<Anthropic.UserMessageParam['content'], string>
+export type BloquesCoach = Exclude<Anthropic.AssistantMessageParam['content'], string>
 
 export interface MetaPropuesta {
   titulo: string
