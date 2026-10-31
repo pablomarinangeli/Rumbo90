@@ -36,7 +36,12 @@ export default function Habitos({ ciclo }: { ciclo: Ciclo }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">Mis hábitos</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Mis hábitos</h1>
+        <Link to="/coach" className="text-sm font-semibold text-violet-300">
+          🤖 Negociar con el coach
+        </Link>
+      </div>
       {SECCIONES.map((s) => {
         const lista = habitos.filter((h) => (h.tipo ?? 'construir') === s.tipo)
         return (

@@ -18,12 +18,33 @@ export interface Objetivo {
   valor_inicial: number | null
   valor_meta: number | null
   dimension_id: string | null
+  subcategoria_id: string | null
 }
 
+export type EstadoCategoria = 'prioritaria' | 'mantenimiento' | 'sin_foco'
+
+/** Categoría de vida (en la base se llama dimensión) */
 export interface Dimension {
   id: string
   nombre: string
   orden: number
+  estado?: EstadoCategoria
+  descripcion?: string | null
+}
+
+export interface Subcategoria {
+  id: string
+  dimension_id: string
+  nombre: string
+  orden: number
+}
+
+export const DIMENSION_CAMPOS = 'id, nombre, orden, estado, descripcion'
+
+export const ESTADOS_CATEGORIA: Record<EstadoCategoria, { nombre: string; ayuda: string; clase: string }> = {
+  prioritaria: { nombre: 'Prioritaria', ayuda: 'Metas activas, compromisos frecuentes y seguimiento semanal.', clase: 'border-emerald-500 text-emerald-400' },
+  mantenimiento: { nombre: 'Mantenimiento', ayuda: 'Hábitos mínimos para sostener lo conseguido.', clase: 'border-sky-400 text-sky-300' },
+  sin_foco: { nombre: 'Sin foco', ayuda: 'No exige acciones. Queda disponible para más adelante.', clase: 'border-slate-600 text-slate-400' },
 }
 
 export type Frecuencia = { tipo: 'dias'; dias: number[] } | { tipo: 'veces_semana'; veces: number }
@@ -81,7 +102,7 @@ export interface Hito {
 
 export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo, tipo, limite_semana, created_at'
 export const OBJETIVO_CAMPOS =
-  'id, codigo, titulo, descripcion, tipo, unidad, valor_inicial, valor_meta, dimension_id'
+  'id, codigo, titulo, descripcion, tipo, unidad, valor_inicial, valor_meta, dimension_id, subcategoria_id'
 
 /** Fecha local en formato AAAA-MM-DD (en-CA usa ese formato) */
 export function fechaISO(fecha = new Date()) {
@@ -118,6 +139,22 @@ export const TIPOS_OBJETIVO: Record<Objetivo['tipo'], string> = {
   conteo: 'Conteo (ej. libros terminados)',
   promedio: 'Promedio (ej. horas por semana)',
   proyecto: 'Proyecto con hitos',
+}
+
+/**
+ * Hábitos en pausa: los que solo empujan metas de categorías "sin foco".
+ * Esas categorías no exigen acciones, así que sus hábitos no aparecen en Hoy ni cuentan en el cumplimiento.
+ */
+export async function habitosEnPausa(cicloId: string) {
+  const { data: dims } = await supabase.from('dimensiones').select('id').eq('ciclo_id', cicloId).eq('estado', 'sin_foco')
+  if (!dims?.length) return new Set<string>()
+  const { data: objs } = await supabase.from('objetivos').select('id, dimension_id').eq('ciclo_id', cicloId)
+  const pausados = new Set((objs ?? []).filter((o) => dims.some((d) => d.id === o.dimension_id)).map((o) => o.id))
+  if (!pausados.size) return new Set<string>()
+  const { data: vinculos } = await supabase.from('habitos_objetivos').select('habito_id, objetivo_id')
+  const porHabito = new Map<string, string[]>()
+  for (const v of vinculos ?? []) porHabito.set(v.habito_id, [...(porHabito.get(v.habito_id) ?? []), v.objetivo_id])
+  return new Set([...porHabito].filter(([, objetivos]) => objetivos.every((o) => pausados.has(o))).map(([h]) => h))
 }
 
 /** Ciclo activo más reciente del usuario, o null si todavía no creó ninguno */

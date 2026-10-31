@@ -15,16 +15,17 @@ export default function HabitoForm({ ciclo }: { ciclo: Ciclo }) {
   const [limite, setLimite] = useState(params.get('limite') ?? '2')
   const [objetivos, setObjetivos] = useState<Objetivo[]>([])
   const [titulo, setTitulo] = useState(params.get('titulo') ?? '')
-  const [modo, setModo] = useState<'dias' | 'veces_semana'>('dias')
+  const objetivoOrigen = params.get('objetivo')
+  const [modo, setModo] = useState<'dias' | 'veces_semana'>(params.get('veces') ? 'veces_semana' : 'dias')
   const [dias, setDias] = useState<number[]>(
     params.get('dias')?.split(',').map(Number) ?? [0, 1, 2, 3, 4, 5, 6],
   )
-  const [veces, setVeces] = useState('3')
+  const [veces, setVeces] = useState(params.get('veces') ?? '3')
   const [hora, setHora] = useState('')
   const [duracion, setDuracion] = useState('')
   const [versionMinima, setVersionMinima] = useState(params.get('minima') ?? '')
   const [activo, setActivo] = useState(true)
-  const [vinculados, setVinculados] = useState<string[]>([])
+  const [vinculados, setVinculados] = useState<string[]>(objetivoOrigen ? [objetivoOrigen] : [])
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -93,7 +94,7 @@ export default function HabitoForm({ ciclo }: { ciclo: Ciclo }) {
         .from('habitos_objetivos')
         .insert(vinculados.map((objetivo_id) => ({ habito_id: data.id, objetivo_id })))
     }
-    navigate('/habitos', { replace: true })
+    navigate(objetivoOrigen ? `/metas/${objetivoOrigen}` : '/habitos', { replace: true })
   }
 
   const eliminar = async () => {

@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BotonPrimario, BotonSecundario, Campo, Volver, inputClase } from '../components/ui'
-import { OBJETIVO_CAMPOS, TIPOS_OBJETIVO, type Ciclo, type Dimension, type Objetivo } from '../lib/datos'
+import { DIMENSION_CAMPOS, OBJETIVO_CAMPOS, TIPOS_OBJETIVO, type Ciclo, type Dimension, type Objetivo, type Subcategoria } from '../lib/datos'
 import { supabase } from '../lib/supabase'
 
 const numero = (v: string) => (v.trim() === '' ? null : Number(v.replace(',', '.')))
@@ -11,6 +11,7 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const [dimensiones, setDimensiones] = useState<Dimension[]>([])
+  const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([])
   const [form, setForm] = useState({
     titulo: '',
     descripcion: '',
@@ -19,6 +20,7 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
     valor_inicial: '',
     valor_meta: '',
     dimension_id: params.get('dimension') ?? '',
+    subcategoria_id: params.get('subcategoria') ?? '',
   })
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -26,10 +28,21 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
   useEffect(() => {
     supabase
       .from('dimensiones')
-      .select('id, nombre, orden')
+      .select(DIMENSION_CAMPOS)
       .eq('ciclo_id', ciclo.id)
       .order('orden')
-      .then(({ data }) => setDimensiones(data ?? []))
+      .then(async ({ data }) => {
+        const dims = (data ?? []) as Dimension[]
+        setDimensiones(dims)
+        setForm((f) => (f.dimension_id || !dims.length ? f : { ...f, dimension_id: dims[0].id }))
+        if (!dims.length) return
+        const { data: subs } = await supabase
+          .from('subcategorias')
+          .select('id, dimension_id, nombre, orden')
+          .in('dimension_id', dims.map((d) => d.id))
+          .order('orden')
+        setSubcategorias(subs ?? [])
+      })
     if (!id) return
     supabase
       .from('objetivos')
@@ -47,6 +60,7 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
           valor_inicial: o.valor_inicial?.toString() ?? '',
           valor_meta: o.valor_meta?.toString() ?? '',
           dimension_id: o.dimension_id ?? '',
+          subcategoria_id: o.subcategoria_id ?? '',
         })
       })
   }, [ciclo.id, id])
@@ -66,6 +80,9 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
       valor_inicial: form.tipo === 'proyecto' ? null : numero(form.valor_inicial),
       valor_meta: form.tipo === 'proyecto' ? null : numero(form.valor_meta),
       dimension_id: form.dimension_id || null,
+      subcategoria_id: subcategorias.some((x) => x.id === form.subcategoria_id && x.dimension_id === form.dimension_id)
+        ? form.subcategoria_id
+        : null,
     }
     const { data, error } = id
       ? await supabase.from('objetivos').update(datos).eq('id', id).select('id').single()
@@ -96,15 +113,33 @@ export default function ObjetivoForm({ ciclo }: { ciclo: Ciclo }) {
       <Campo etiqueta="Qué querés lograr">
         <input required value={form.titulo} onChange={cambiar('titulo')} className={inputClase} placeholder="Ej. Llegar a mi peso objetivo" />
       </Campo>
-      <Campo etiqueta="Dimensión">
-        <select value={form.dimension_id} onChange={cambiar('dimension_id')} className={inputClase}>
-          {dimensiones.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.nombre}
-            </option>
-          ))}
-        </select>
-      </Campo>
+      <div className="grid grid-cols-2 gap-3">
+        <Campo etiqueta="Categoría">
+          <select
+            value={form.dimension_id}
+            onChange={(e) => setForm((f) => ({ ...f, dimension_id: e.target.value, subcategoria_id: '' }))}
+            className={inputClase}
+          >
+            {dimensiones.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nombre}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo etiqueta="Subcategoría">
+          <select value={form.subcategoria_id} onChange={cambiar('subcategoria_id')} className={inputClase}>
+            <option value="">Sin subcategoría</option>
+            {subcategorias
+              .filter((x) => x.dimension_id === form.dimension_id)
+              .map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.nombre}
+                </option>
+              ))}
+          </select>
+        </Campo>
+      </div>
       <Campo etiqueta="Tipo de meta">
         <select value={form.tipo} onChange={cambiar('tipo')} className={inputClase}>
           {Object.entries(TIPOS_OBJETIVO).map(([valor, texto]) => (

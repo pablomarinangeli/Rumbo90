@@ -21,12 +21,15 @@ export interface PlantillaObjetivo {
   valor_inicial?: number
   valor_meta?: number
   hitos?: string[]
+  /** Nombre de la subcategoría dentro de su categoría */
+  subcategoria?: string
 }
 
 export interface PlantillaCiclo {
   nombre: string
   fecha_inicio: string
   fecha_fin: string
+  /** Metas por categoría. Las 6 categorías base se crean siempre; acá se nombran por su nombre base. */
   dimensiones: { nombre: string; objetivos: PlantillaObjetivo[] }[]
   habitos: PlantillaHabito[]
 }

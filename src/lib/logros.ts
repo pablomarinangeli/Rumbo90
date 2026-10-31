@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { fechaISO, inicioSemana, type Ciclo, type EstadoCompromiso, type Habito, type RegistroHabito } from './datos'
+import { fechaISO, habitosEnPausa, inicioSemana, type Ciclo, type EstadoCompromiso, type Habito, type RegistroHabito } from './datos'
 import { supabase } from './supabase'
 
 /*
@@ -29,7 +29,7 @@ export function useHistorial(ciclo: Ciclo) {
   const [historial, setHistorial] = useState<Historial | null>(null)
 
   const recargar = useCallback(async () => {
-    const [h, c, r] = await Promise.all([
+    const [h, c, r, pausa] = await Promise.all([
       supabase
         .from('habitos')
         .select('id, titulo, frecuencia, hora, duracion_min, version_minima, activo, tipo, limite_semana, created_at')
@@ -40,9 +40,10 @@ export function useHistorial(ciclo: Ciclo) {
         .gte('fecha', ciclo.fecha_inicio)
         .order('fecha', { ascending: false }),
       supabase.from('registros_habito').select('id, habito_id, fecha').gte('fecha', ciclo.fecha_inicio),
+      habitosEnPausa(ciclo.id),
     ])
     setHistorial({
-      habitos: (h.data ?? []) as Habito[],
+      habitos: ((h.data ?? []) as Habito[]).filter((x) => !pausa.has(x.id)),
       compromisos: (c.data ?? []) as HistCompromiso[],
       registros: (r.data ?? []) as RegistroHabito[],
     })

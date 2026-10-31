@@ -12,6 +12,7 @@ import {
   type Medicion,
   type Objetivo,
 } from '../lib/datos'
+import { linkSugerencia, sugerirParaMeta, temasDeMeta } from '../lib/sugerencias'
 import { supabase } from '../lib/supabase'
 
 export default function ObjetivoDetalle() {
@@ -21,18 +22,28 @@ export default function ObjetivoDetalle() {
   const [mediciones, setMediciones] = useState<Medicion[]>([])
   const [hitos, setHitos] = useState<Hito[]>([])
   const [habitos, setHabitos] = useState<Habito[]>([])
+  const [todos, setTodos] = useState<Habito[]>([])
+  const [dimension, setDimension] = useState<string | null>(null)
+  const [verTodas, setVerTodas] = useState(false)
   const [valor, setValor] = useState('')
   const [fecha, setFecha] = useState(fechaISO())
   const [nuevoHito, setNuevoHito] = useState('')
 
   const cargar = useCallback(async () => {
     if (!id) return
-    const [o, m, h, v] = await Promise.all([
+    const [o, m, h, v, t] = await Promise.all([
       supabase.from('objetivos').select(OBJETIVO_CAMPOS).eq('id', id).single(),
       supabase.from('mediciones').select('id, objetivo_id, fecha, valor, unidad, nota').eq('objetivo_id', id).order('fecha', { ascending: false }),
       supabase.from('hitos').select('id, objetivo_id, titulo, fecha, estado, orden').eq('objetivo_id', id).order('orden'),
       supabase.from('habitos_objetivos').select(`habitos(${HABITO_CAMPOS})`).eq('objetivo_id', id),
+      supabase.from('habitos').select(HABITO_CAMPOS).eq('activo', true),
     ])
+    const obj = o.data as Objetivo | null
+    if (obj?.dimension_id) {
+      const { data: d } = await supabase.from('dimensiones').select('nombre').eq('id', obj.dimension_id).maybeSingle()
+      setDimension(d?.nombre ?? null)
+    }
+    setTodos((t.data ?? []) as Habito[])
     setObjetivo(o.data as Objetivo | null)
     setMediciones(m.data ?? [])
     setHitos(h.data ?? [])
@@ -46,6 +57,15 @@ export default function ObjetivoDetalle() {
   if (!objetivo) return <p className="text-slate-500">Cargando…</p>
 
   const avance = calcularAvance(objetivo, mediciones, hitos)
+  const meta = { ...objetivo, dimension }
+  const sugerencias = sugerirParaMeta(meta, habitos.map((h) => h.titulo), verTodas ? 12 : 4)
+  const temas = temasDeMeta(meta)
+  const existente = (titulo: string) => todos.find((h) => h.titulo.trim().toLowerCase() === titulo.trim().toLowerCase())
+
+  const vincular = async (h: Habito) => {
+    await supabase.from('habitos_objetivos').insert({ habito_id: h.id, objetivo_id: objetivo.id })
+    void cargar()
+  }
 
   const registrar = async (e: FormEvent) => {
     e.preventDefault()
@@ -175,9 +195,54 @@ export default function ObjetivoDetalle() {
               </Link>
             </li>
           ))}
-          {habitos.length === 0 && <li className="text-slate-500">Ninguno todavía. Vinculalos desde la pestaña Hábitos.</li>}
+          {habitos.length === 0 && <li className="text-slate-500">Ninguno todavía. Mirá las sugerencias de abajo.</li>}
         </ul>
+        <Link to={`/habitos/nuevo?objetivo=${objetivo.id}`} className="mt-2 inline-block text-sm text-emerald-400">
+          + Crear un hábito para esta meta
+        </Link>
       </section>
+
+      {sugerencias.length > 0 && (
+        <section className="mt-6 rounded-xl border border-violet-400/30 bg-violet-400/5 p-4">
+          <h2 className="font-semibold">💡 Hábitos sugeridos para esta meta</h2>
+          <p className="mt-1 text-xs text-slate-400">
+            {temas.length ? `Según tu meta: ${temas.join(' y ').toLowerCase()}.` : 'Ideas generales para empezar.'} Tocá una para
+            cargarla ya vinculada y ajustala a tu medida.
+          </p>
+          <ul className="mt-3 space-y-2">
+            {sugerencias.map((s) => {
+              const ya = existente(s.titulo)
+              return (
+                <li key={s.titulo} className="flex items-start justify-between gap-3 rounded-lg border border-slate-800 p-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      <span className={s.tipo === 'reducir' ? 'text-rose-300' : 'text-emerald-400'}>
+                        {s.tipo === 'reducir' ? 'Reducir: ' : ''}
+                      </span>
+                      {s.titulo}
+                    </p>
+                    <p className="text-xs text-slate-400">{s.porque}</p>
+                  </div>
+                  {ya ? (
+                    <button onClick={() => void vincular(ya)} className="shrink-0 text-sm font-semibold text-violet-300">
+                      Vincular
+                    </button>
+                  ) : (
+                    <Link to={linkSugerencia(s, objetivo.id)} className="shrink-0 text-sm font-semibold text-violet-300">
+                      + Agregar
+                    </Link>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+          {!verTodas && (
+            <button onClick={() => setVerTodas(true)} className="mt-2 text-sm text-slate-400">
+              Ver más ideas
+            </button>
+          )}
+        </section>
+      )}
     </div>
   )
 }
