@@ -36,6 +36,16 @@ export interface Habito {
   duracion_min: number | null
   version_minima: string | null
   activo: boolean
+  /** construir = hábito bueno; reducir = hábito malo a reducir o eliminar */
+  tipo: 'construir' | 'reducir'
+  /** Solo para reducir: máximo por semana (0 = eliminar) */
+  limite_semana: number | null
+}
+
+export interface RegistroHabito {
+  id: string
+  habito_id: string
+  fecha: string
 }
 
 export type EstadoCompromiso = 'pendiente' | 'realizado' | 'parcial' | 'reprogramado' | 'omitido' | 'cancelado'
@@ -68,13 +78,30 @@ export interface Hito {
   orden: number
 }
 
-export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo'
+export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo, tipo, limite_semana'
 export const OBJETIVO_CAMPOS =
   'id, codigo, titulo, descripcion, tipo, unidad, valor_inicial, valor_meta, dimension_id'
 
 /** Fecha local en formato AAAA-MM-DD (en-CA usa ese formato) */
 export function fechaISO(fecha = new Date()) {
   return fecha.toLocaleDateString('en-CA')
+}
+
+/** Lunes de la semana de una fecha, en AAAA-MM-DD */
+export function inicioSemana(fecha = new Date()) {
+  const d = new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate())
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return fechaISO(d)
+}
+
+/** Días enteros entre dos fechas AAAA-MM-DD */
+export function diasEntre(desde: string, hasta: string) {
+  return Math.round((Date.parse(hasta + 'T00:00:00') - Date.parse(desde + 'T00:00:00')) / 864e5)
+}
+
+export function describirLimite(limite: number | null) {
+  if (!limite) return 'Eliminar (0 por semana)'
+  return `Máximo ${limite} ${limite === 1 ? 'vez' : 'veces'} por semana`
 }
 
 export const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -127,10 +154,11 @@ export function diaDelCiclo(ciclo: Ciclo, hoy = new Date()) {
   return { dia: Math.min(Math.max(dia, 0), total + 1), total }
 }
 
-/** Hábitos que corresponden a un día. Los de "N veces por semana" aparecen siempre como opcionales. */
+/** Hábitos a construir que corresponden a un día. Los de "N veces por semana" aparecen siempre como opcionales. */
 export function habitosDelDia(habitos: Habito[], fecha = new Date()) {
   const dia = fecha.getDay()
   return habitos
+    .filter((h) => h.tipo !== 'reducir')
     .filter((h) => h.frecuencia.tipo === 'veces_semana' || h.frecuencia.dias.includes(dia))
     .sort((a, b) => (a.hora ?? '99').localeCompare(b.hora ?? '99'))
 }
