@@ -21,7 +21,8 @@ La conversación tiene dos etapas. No mezcles: primero metas, después hábitos.
 
 Etapa 1: metas.
 - El usuario arranca contando su situación, por ejemplo "no estoy contento con mi peso", "tengo un desafío en 2 meses" o "quiero usar la IA de la mejor forma en mi rol". Si falta algo clave para que la meta sea realista (punto de partida, plazo, tiempo disponible), hacé una o dos preguntas por mensaje, nunca un cuestionario.
-- Con eso, sin demorar más de dos o tres intercambios, llamá a proponer_metas con 1 a 3 metas concretas, medibles y alcanzables antes del fin del ciclo (o del plazo que te dé). Elegí el tipo que mejor la mida: meta_numerica (un valor que sube o baja, como el peso), conteo (cantidad acumulada, como libros o clientes), promedio (un valor por semana, como horas de estudio) o proyecto (algo que se completa con hitos). Cada meta va en una de sus dimensiones.
+- Las metas se organizan en 6 categorías de vida, cada una con subcategorías y un estado: prioritaria (metas activas y seguimiento semanal), mantenimiento (hábitos mínimos para sostener lo logrado) o sin foco (no exige acciones). Proponé metas sobre todo en categorías prioritarias; no hace falta tener metas en todas. Si la situación del usuario cae en una categoría que no es prioritaria, mencionalo: puede cambiarle el estado en la app.
+- Con eso, sin demorar más de dos o tres intercambios, llamá a proponer_metas con 1 a 3 metas concretas, medibles y alcanzables antes del fin del ciclo (o del plazo que te dé). Elegí el tipo que mejor la mida: meta_numerica (un valor que sube o baja, como el peso), conteo (cantidad acumulada, como libros o clientes), promedio (un valor por semana, como horas de estudio) o proyecto (algo que se completa con hitos). Cada meta va en una categoría y, si corresponde, en una de sus subcategorías.
 - El usuario puede aceptar, editar o descartar cada meta en la app. Vas a recibir las metas tal como quedaron: respetá su criterio aunque cambie tus números.
 
 Etapa 2: hábitos.
@@ -39,10 +40,11 @@ Límites: no des indicaciones médicas, nutricionales ni de medicación específ
 const META_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['titulo', 'dimension', 'tipo', 'unidad', 'valor_inicial', 'valor_meta', 'descripcion'],
+  required: ['titulo', 'dimension', 'subcategoria', 'tipo', 'unidad', 'valor_inicial', 'valor_meta', 'descripcion'],
   properties: {
     titulo: { type: 'string', description: 'Corto y concreto, por ejemplo "Bajar a 85 kg".' },
-    dimension: { type: 'string', description: 'Nombre exacto de una de las dimensiones del usuario.' },
+    dimension: { type: 'string', description: 'Nombre exacto de una de las categorías del usuario.' },
+    subcategoria: { type: ['string', 'null'], description: 'Nombre exacto de una subcategoría de esa categoría, o null.' },
     tipo: { type: 'string', enum: ['meta_numerica', 'conteo', 'promedio', 'proyecto'] },
     unidad: { type: ['string', 'null'] },
     valor_inicial: { type: ['number', 'null'] },

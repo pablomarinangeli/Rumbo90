@@ -7,6 +7,7 @@ import {
   HABITO_CAMPOS,
   diaDelCiclo,
   fechaISO,
+  habitosEnPausa,
   habitosDelDia,
   type Ciclo,
   type Compromiso,
@@ -31,6 +32,7 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
   const [habitos, setHabitos] = useState<Habito[]>([])
   const [compromisos, setCompromisos] = useState<Compromiso[]>([])
   const [fallidosAyer, setFallidosAyer] = useState<string[]>([])
+  const [enPausa, setEnPausa] = useState(0)
   const hoy = fechaISO()
   const { dia, total } = diaDelCiclo(ciclo)
   const { historial, recargar: recargarHistorial } = useHistorial(ciclo)
@@ -39,12 +41,15 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
 
   const cargar = useCallback(async () => {
     const ayer = fechaISO(new Date(Date.now() - 864e5))
-    const [h, c, a] = await Promise.all([
+    const [h, c, a, pausa] = await Promise.all([
       supabase.from('habitos').select(HABITO_CAMPOS).eq('ciclo_id', ciclo.id).eq('activo', true),
       supabase.from('compromisos').select(COMPROMISO_CAMPOS).eq('fecha', hoy),
       supabase.from('compromisos').select('habito_id').eq('fecha', ayer).eq('estado', 'omitido'),
+      habitosEnPausa(ciclo.id),
     ])
-    setHabitos((h.data ?? []) as Habito[])
+    const todos = (h.data ?? []) as Habito[]
+    setHabitos(todos.filter((x) => !pausa.has(x.id)))
+    setEnPausa(todos.filter((x) => pausa.has(x.id)).length)
     setCompromisos((c.data ?? []) as Compromiso[])
     setFallidosAyer((a.data ?? []).map((x) => x.habito_id).filter((x): x is string => Boolean(x)))
     void recargarHistorial()
@@ -168,6 +173,12 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
           </li>
         )}
       </ul>
+
+      {enPausa > 0 && (
+        <p className="mt-4 text-xs text-slate-500">
+          {enPausa} {enPausa === 1 ? 'hábito está en pausa' : 'hábitos están en pausa'} porque sus metas son de categorías sin foco.
+        </p>
+      )}
 
       <HabitosAReducir habitos={habitos.filter((h) => h.tipo === 'reducir')} alCambiar={recargarHistorial} />
     </div>

@@ -269,7 +269,13 @@ export function sugerirParaMeta(meta: MetaParaSugerir, existentes: string[], max
         ? ['Trabajo y proyectos']
         : dim.includes('personal') || dim.includes('desarrollo')
           ? ['Lectura', 'Estrés y bienestar']
-          : []
+          : dim.includes('relacion') || dim.includes('vinculo')
+            ? ['Familia y vínculos']
+            : dim.includes('finanz') || dim.includes('patrimonio')
+              ? ['Finanzas']
+              : dim.includes('experiencia') || dim.includes('disfrute')
+                ? ['Estrés y bienestar', 'Escritura y creación']
+                : []
     temas = TEMAS.filter((t) => porDimension.includes(t.nombre))
   }
 

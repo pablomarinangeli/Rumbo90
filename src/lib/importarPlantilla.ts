@@ -18,19 +18,35 @@ export async function importarPlantilla(p: PlantillaCiclo): Promise<string> {
 
   const idsPorCodigo = new Map<string, string>()
 
-  for (const [orden, dim] of p.dimensiones.entries()) {
-    const dimension = check(
-      await supabase
-        .from('dimensiones')
-        .insert({ ciclo_id: ciclo.id, nombre: dim.nombre, orden })
-        .select('id')
-        .single(),
-    )
-    for (const { hitos, ...obj } of dim.objetivos) {
+  // Las 6 categorías y sus 18 subcategorías se crean en la base, siempre iguales para todos
+  check(await supabase.rpc('crear_categorias_base', { p_ciclo: ciclo.id }))
+  const dimensiones = check(await supabase.from('dimensiones').select('id, nombre, orden').eq('ciclo_id', ciclo.id))
+  const subcategorias = check(
+    await supabase
+      .from('subcategorias')
+      .select('id, nombre, dimension_id')
+      .in('dimension_id', dimensiones.map((d) => d.id)),
+  )
+
+  for (const dim of p.dimensiones) {
+    let dimension = dimensiones.find((d) => d.nombre === dim.nombre)
+    if (!dimension) {
+      dimension = check(
+        await supabase
+          .from('dimensiones')
+          .insert({ ciclo_id: ciclo.id, nombre: dim.nombre, orden: dimensiones.length })
+          .select('id, nombre, orden')
+          .single(),
+      )
+    }
+    const dimensionId = dimension.id
+    for (const { hitos, subcategoria, ...obj } of dim.objetivos) {
+      const subcategoria_id =
+        subcategorias.find((s) => s.dimension_id === dimensionId && s.nombre === subcategoria)?.id ?? null
       const objetivo = check(
         await supabase
           .from('objetivos')
-          .insert({ ...obj, ciclo_id: ciclo.id, dimension_id: dimension.id, fecha_meta: p.fecha_fin })
+          .insert({ ...obj, ciclo_id: ciclo.id, dimension_id: dimensionId, subcategoria_id, fecha_meta: p.fecha_fin })
           .select('id')
           .single(),
       )

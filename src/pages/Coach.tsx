@@ -15,7 +15,8 @@ import {
   type PropuestaHabitos,
   type PropuestaMetas,
 } from '../lib/coach'
-import {
+import { DIMENSION_CAMPOS,
+  ESTADOS_CATEGORIA,
   HABITO_CAMPOS,
   OBJETIVO_CAMPOS,
   TIPOS_OBJETIVO,
@@ -26,6 +27,7 @@ import {
   type Dimension,
   type Habito,
   type Objetivo,
+  type Subcategoria,
 } from '../lib/datos'
 import { normalizar } from '../lib/sugerencias'
 import { supabase } from '../lib/supabase'
@@ -54,17 +56,27 @@ export default function Coach({ ciclo }: { ciclo: Ciclo }) {
   const [pensando, setPensando] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dimensiones, setDimensiones] = useState<Dimension[]>([])
+  const [subcategorias, setSubcategorias] = useState<Subcategoria[]>([])
   const [objetivos, setObjetivos] = useState<Objetivo[]>([])
   const [habitos, setHabitos] = useState<Habito[]>([])
   const final = useRef<HTMLDivElement>(null)
 
   const cargarDatos = useCallback(async () => {
     const [d, o, h] = await Promise.all([
-      supabase.from('dimensiones').select('id, nombre, orden').eq('ciclo_id', ciclo.id).order('orden'),
+      supabase.from('dimensiones').select(DIMENSION_CAMPOS).eq('ciclo_id', ciclo.id).order('orden'),
       supabase.from('objetivos').select(OBJETIVO_CAMPOS).eq('ciclo_id', ciclo.id),
       supabase.from('habitos').select(HABITO_CAMPOS).eq('ciclo_id', ciclo.id).eq('activo', true),
     ])
-    setDimensiones(d.data ?? [])
+    const dims = (d.data ?? []) as Dimension[]
+    setDimensiones(dims)
+    if (dims.length) {
+      const { data: s } = await supabase
+        .from('subcategorias')
+        .select('id, dimension_id, nombre, orden')
+        .in('dimension_id', dims.map((x) => x.id))
+        .order('orden')
+      setSubcategorias((s ?? []) as Subcategoria[])
+    }
     setObjetivos((o.data ?? []) as Objetivo[])
     setHabitos((h.data ?? []) as Habito[])
   }, [ciclo.id])
@@ -80,7 +92,14 @@ export default function Coach({ ciclo }: { ciclo: Ciclo }) {
 
   const contexto = (objs = objetivos) => {
     const { dia, total } = diaDelCiclo(ciclo)
-    const dims = dimensiones.map((d) => d.nombre).join(', ') || 'ninguna'
+    const dims =
+      dimensiones
+        .map((d) => {
+          const subs = subcategorias.filter((x) => x.dimension_id === d.id).map((x) => x.nombre)
+          const estado = ESTADOS_CATEGORIA[d.estado ?? 'prioritaria'].nombre.toLowerCase()
+          return `- ${d.nombre} [${estado}]${subs.length ? `: ${subs.join(' · ')}` : ''}`
+        })
+        .join('\n') || 'ninguna'
     const metas = objs.length
       ? objs
           .map((o) => `- ${o.titulo} (${o.tipo}${o.valor_meta != null ? `, de ${o.valor_inicial ?? '?'} a ${o.valor_meta} ${o.unidad ?? ''}` : ''})`)
@@ -93,7 +112,8 @@ export default function Coach({ ciclo }: { ciclo: Ciclo }) {
       : 'ninguno'
     return `Hoy: ${new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.
 Ciclo: ${ciclo.nombre}, del ${ciclo.fecha_inicio} al ${ciclo.fecha_fin} (día ${dia} de ${total}).
-Dimensiones: ${dims}.
+Categorías (estado y subcategorías):
+${dims}
 Metas actuales:
 ${metas}
 Hábitos actuales:
@@ -149,10 +169,21 @@ ${habs}`
     dimensiones.find((d) => normalizar(nombre).includes(normalizar(d.nombre)) || normalizar(d.nombre).includes(normalizar(nombre)))?.id ??
     null
 
+  const subcategoriaDe = (dimensionId: string | null, nombre: string | null) => {
+    if (!dimensionId || !nombre) return null
+    const subs = subcategorias.filter((x) => x.dimension_id === dimensionId)
+    return (
+      subs.find((x) => normalizar(x.nombre) === normalizar(nombre))?.id ??
+      subs.find((x) => normalizar(x.nombre).includes(normalizar(nombre)) || normalizar(nombre).includes(normalizar(x.nombre)))?.id ??
+      null
+    )
+  }
+
   /** Etapa 1: crea las metas tal como las dejó el usuario */
   const crearMetas = async (propuesta: PropuestaMetas, finales: MetaPropuesta[], descartadas: MetaPropuesta[]) => {
     const nuevas: Objetivo[] = []
     for (const m of finales) {
+      const dimensionId = dimensionDe(m.dimension)
       const proyecto = m.tipo === 'proyecto'
       const { data } = await supabase
         .from('objetivos')
@@ -165,7 +196,8 @@ ${habs}`
           unidad: proyecto ? null : m.unidad,
           valor_inicial: proyecto ? null : m.valor_inicial,
           valor_meta: proyecto ? null : m.valor_meta,
-          dimension_id: dimensionDe(m.dimension),
+          dimension_id: dimensionId,
+          subcategoria_id: subcategoriaDe(dimensionId, m.subcategoria),
         })
         .select(OBJETIVO_CAMPOS)
         .single()
@@ -174,7 +206,7 @@ ${habs}`
     const objs = [...objetivos, ...nuevas]
     setObjetivos(objs)
     const detalle = finales
-      .map((m) => `«${m.titulo}» (${m.dimension}${m.valor_meta != null ? `, de ${m.valor_inicial ?? '?'} a ${m.valor_meta} ${m.unidad ?? ''}` : ''})`)
+      .map((m) => `«${m.titulo}» (${m.dimension}${m.subcategoria ? ` / ${m.subcategoria}` : ''}${m.valor_meta != null ? `, de ${m.valor_inicial ?? '?'} a ${m.valor_meta} ${m.unidad ?? ''}` : ''})`)
       .join('; ')
     const editadas = finales.some((m, i) => JSON.stringify(m) !== JSON.stringify(propuesta.metas[i]))
     await enviar(
@@ -256,6 +288,7 @@ ${habs}`
                 <TarjetaMetas
                   propuesta={propuesta.datos}
                   dimensiones={dimensiones}
+                  subcategorias={subcategorias}
                   abierta={abierta}
                   alCrear={crearMetas}
                   alPedirCambios={pedirCambios}
@@ -332,17 +365,23 @@ function PedirCambios({ alEnviar, alVolver }: { alEnviar: (c: string) => void; a
 function TarjetaMetas({
   propuesta,
   dimensiones,
+  subcategorias,
   abierta,
   alCrear,
   alPedirCambios,
 }: {
   propuesta: PropuestaMetas
   dimensiones: Dimension[]
+  subcategorias: Subcategoria[]
   abierta: boolean
   alCrear: (p: PropuestaMetas, finales: MetaPropuesta[], descartadas: MetaPropuesta[]) => Promise<void>
   alPedirCambios: (c: string) => void
 }) {
-  const [metas, setMetas] = useState(() => propuesta.metas.map((m) => ({ ...m, elegida: true })))
+  const [metas, setMetas] = useState(() => propuesta.metas.map((m) => ({ ...m, subcategoria: m.subcategoria ?? null, elegida: true })))
+  const subsDe = (dimension: string) => {
+    const d = dimensiones.find((x) => x.nombre === dimension)
+    return d ? subcategorias.filter((x) => x.dimension_id === d.id) : []
+  }
   const [pidiendo, setPidiendo] = useState(false)
   const [creando, setCreando] = useState(false)
   const cambiar = (i: number, campos: Partial<(typeof metas)[number]>) =>
@@ -372,11 +411,20 @@ function TarjetaMetas({
             {m.descripcion && <p className="mt-1 text-xs text-slate-400">{m.descripcion}</p>}
             {abierta ? (
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                <select value={m.dimension} onChange={(e) => cambiar(i, { dimension: e.target.value })} className={`${inputClase} py-1 text-xs`}>
+                <select value={m.dimension} onChange={(e) => cambiar(i, { dimension: e.target.value, subcategoria: null })} className={`${inputClase} py-1 text-xs`}>
                   {!dimensiones.some((d) => d.nombre === m.dimension) && <option value={m.dimension}>{m.dimension}</option>}
                   {dimensiones.map((d) => (
                     <option key={d.id} value={d.nombre}>
                       {d.nombre}
+                    </option>
+                  ))}
+                </select>
+                <select value={m.subcategoria ?? ''} onChange={(e) => cambiar(i, { subcategoria: e.target.value || null })} className={`${inputClase} py-1 text-xs`}>
+                  <option value="">Sin subcategoría</option>
+                  {m.subcategoria && !subsDe(m.dimension).some((x) => x.nombre === m.subcategoria) && <option value={m.subcategoria}>{m.subcategoria}</option>}
+                  {subsDe(m.dimension).map((x) => (
+                    <option key={x.id} value={x.nombre}>
+                      {x.nombre}
                     </option>
                   ))}
                 </select>
@@ -415,6 +463,7 @@ function TarjetaMetas({
             ) : (
               <p className="mt-1 text-xs text-slate-400">
                 {m.dimension}
+                {m.subcategoria && ` / ${m.subcategoria}`}
                 {m.valor_meta != null && ` · de ${m.valor_inicial ?? '?'} a ${m.valor_meta} ${m.unidad ?? ''}`}
               </p>
             )}

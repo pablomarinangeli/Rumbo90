@@ -7,7 +7,9 @@ import Ajustes from './pages/Ajustes'
 import Bienvenida from './pages/Bienvenida'
 import HabitoForm from './pages/HabitoForm'
 import Habitos from './pages/Habitos'
+import Categorias from './pages/Categorias'
 import Coach from './pages/Coach'
+import Equilibrio from './pages/Equilibrio'
 import Hoy from './pages/Hoy'
 import Login from './pages/Login'
 import Logros from './pages/Logros'
@@ -40,6 +42,8 @@ function AppConSesion() {
             <Route path="habitos/:id" element={<HabitoForm ciclo={ciclo} />} />
             <Route path="logros" element={<Logros ciclo={ciclo} />} />
             <Route path="coach" element={<Coach ciclo={ciclo} />} />
+            <Route path="categorias" element={<Categorias ciclo={ciclo} />} />
+            <Route path="equilibrio" element={<Equilibrio ciclo={ciclo} />} />
           </>
         ) : (
           <Route index element={<Bienvenida alCrear={() => void recargar()} />} />

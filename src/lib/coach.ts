@@ -9,6 +9,7 @@ export type BloquesCoach = Exclude<Anthropic.AssistantMessageParam['content'], s
 export interface MetaPropuesta {
   titulo: string
   dimension: string
+  subcategoria: string | null
   tipo: 'meta_numerica' | 'conteo' | 'promedio' | 'proyecto'
   unidad: string | null
   valor_inicial: number | null

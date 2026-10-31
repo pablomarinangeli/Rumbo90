@@ -9,7 +9,7 @@ function rango(desde: Date, dias: number) {
 }
 
 /**
- * Ciclo de ejemplo con las tres dimensiones de Rumbo 90. Las metas no traen
+ * Ciclo de ejemplo con metas en tres de las seis categorías de Rumbo 90. Las metas no traen
  * valores personales: cada usuario completa sus valores iniciales y finales.
  */
 export function cicloEjemplo(desde = new Date()): PlantillaCiclo {
@@ -18,22 +18,23 @@ export function cicloEjemplo(desde = new Date()): PlantillaCiclo {
     ...rango(desde, 90),
     dimensiones: [
       {
-        nombre: 'Salud y condición física',
+        nombre: 'Salud y bienestar',
         objetivos: [
-          { codigo: 'H1', titulo: 'Mejorar mi composición corporal', tipo: 'meta_numerica', unidad: 'kg' },
+          { codigo: 'H1', titulo: 'Mejorar mi composición corporal', tipo: 'meta_numerica', unidad: 'kg', subcategoria: 'Alimentación y composición corporal' },
           {
             codigo: 'H2',
             titulo: 'Mejorar mi condición física',
             descripcion: 'Por ejemplo, VO₂ máx. o sesiones de actividad por semana',
             tipo: 'promedio',
+            subcategoria: 'Condición física y deporte',
           },
         ],
       },
       {
         nombre: 'Desarrollo personal',
         objetivos: [
-          { codigo: 'D1', titulo: 'Completar cursos de aprendizaje', tipo: 'conteo', unidad: 'cursos', valor_inicial: 0 },
-          { codigo: 'D2', titulo: 'Reemplazar redes por lectura', tipo: 'conteo', unidad: 'libros', valor_inicial: 0 },
+          { codigo: 'D1', titulo: 'Completar cursos de aprendizaje', tipo: 'conteo', unidad: 'cursos', valor_inicial: 0, subcategoria: 'Aprendizaje y conocimientos' },
+          { codigo: 'D2', titulo: 'Reemplazar redes por lectura', tipo: 'conteo', unidad: 'libros', valor_inicial: 0, subcategoria: 'Aprendizaje y conocimientos' },
         ],
       },
       {
@@ -45,8 +46,9 @@ export function cicloEjemplo(desde = new Date()): PlantillaCiclo {
             tipo: 'promedio',
             unidad: 'horas estratégicas por semana',
             valor_inicial: 0,
+            subcategoria: 'Productividad y gestión del tiempo',
           },
-          { codigo: 'P2', titulo: 'Proyecto estratégico principal', tipo: 'proyecto' },
+          { codigo: 'P2', titulo: 'Proyecto estratégico principal', tipo: 'proyecto', subcategoria: 'Estrategia y proyectos' },
         ],
       },
     ],
@@ -109,13 +111,13 @@ export function cicloEjemplo(desde = new Date()): PlantillaCiclo {
   }
 }
 
-/** Ciclo vacío de 90 días con las tres dimensiones, para quien empieza de cero */
+/** Ciclo vacío de 90 días con las seis categorías, para quien empieza de cero */
 export function cicloVacio(desde = new Date()): PlantillaCiclo {
   return {
     nombre: 'Mi primer ciclo',
     ...rango(desde, 90),
     dimensiones: [
-      { nombre: 'Salud y condición física', objetivos: [] },
+      { nombre: 'Salud y bienestar', objetivos: [] },
       { nombre: 'Desarrollo personal', objetivos: [] },
       { nombre: 'Desarrollo profesional', objetivos: [] },
     ],
