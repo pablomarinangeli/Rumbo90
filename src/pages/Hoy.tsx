@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import HabitosAReducir from '../components/HabitosAReducir'
 import { BarraAvance } from '../components/ui'
 import {
   HABITO_CAMPOS,
@@ -152,6 +153,8 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
           </li>
         )}
       </ul>
+
+      <HabitosAReducir habitos={habitos.filter((h) => h.tipo === 'reducir')} />
     </div>
   )
 }
