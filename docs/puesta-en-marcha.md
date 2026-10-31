@@ -15,9 +15,20 @@ Rumbo 90 corre como web app en la nube: **Supabase** (base de datos y login con 
    - Si lo pide, configurar la pantalla de consentimiento como *External* y agregar tu email y el de tu amigo como usuarios de prueba (o publicarla).
 2. En **Authorized redirect URIs** agregar la URL de callback que muestra Supabase en **Authentication → Sign In / Providers → Google** (tiene la forma `https://<proyecto>.supabase.co/auth/v1/callback`).
 3. Copiar el *Client ID* y el *Client secret* en ese mismo proveedor de Google en Supabase y activarlo.
-4. En **Authentication → URL Configuration**, poner como *Site URL* la dirección de Vercel (paso 3) y agregar `http://localhost:5173` en *Redirect URLs* para desarrollo.
+4. En **Authentication → URL Configuration**, poner como *Site URL* la dirección pública de la app (paso 3) y agregar `http://localhost:5173` en *Redirect URLs* para desarrollo.
 
-## 3. Vercel
+## 3. Publicación en GitHub Pages
+
+Cada push a `main` publica la app en <https://pablomarinangeli.github.io/Rumbo90/> mediante `.github/workflows/pages.yml`.
+
+1. En GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+2. En **Settings → Secrets and variables → Actions**:
+   - pestaña *Variables*: `VITE_SUPABASE_URL` = la URL del proyecto de Supabase.
+   - pestaña *Secrets*: `VITE_SUPABASE_ANON_KEY` = la clave anon.
+3. En Supabase, **Authentication → URL Configuration**: *Site URL* `https://pablomarinangeli.github.io/Rumbo90/` y la misma dirección en *Redirect URLs*.
+4. Volver a correr el workflow (**Actions → Publicar en GitHub Pages → Run workflow**) o hacer un push a `main`.
+
+## 3b. Alternativa: Vercel
 
 1. En <https://vercel.com/new> importar el repositorio `Rumbo90` (framework: Vite).
 2. Cargar las variables de entorno `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
