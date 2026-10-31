@@ -17,7 +17,7 @@ src/
   App.tsx              rutas y control de sesión
   lib/                 cliente de Supabase, auth, consultas, importación de plantillas
   pages/               Hoy, Metas, Revisión, Ajustes, Login, Bienvenida
-  plantillas/          ciclo inicial de Rumbo 90 y ciclo vacío
+  plantillas/          ciclo de ejemplo y ciclo vacío
 supabase/migrations/   esquema de base de datos con seguridad por usuario
 ```
 

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { importarPlantilla } from '../lib/importarPlantilla'
-import { cicloRumbo90, cicloVacio } from '../plantillas'
+import { cicloEjemplo, cicloVacio } from '../plantillas'
 import type { PlantillaCiclo } from '../plantillas/tipos'
 
 export default function Bienvenida({ alCrear }: { alCrear: () => void }) {
@@ -26,12 +26,12 @@ export default function Bienvenida({ alCrear }: { alCrear: () => void }) {
       <div className="mt-6 space-y-3">
         <button
           disabled={creando}
-          onClick={() => void crear(cicloRumbo90)}
+          onClick={() => void crear(cicloEjemplo())}
           className="w-full rounded-xl border border-emerald-500/50 bg-emerald-500/10 p-4 text-left disabled:opacity-50"
         >
-          <span className="font-semibold">Ciclo Rumbo 90 (30/10 al 31/12)</span>
+          <span className="font-semibold">Ciclo de 90 días con ejemplos</span>
           <span className="mt-1 block text-sm text-slate-400">
-            Las metas y hábitos de la especificación: salud, desarrollo personal y profesional.
+            Metas y hábitos de ejemplo en salud, desarrollo personal y profesional, para completar con tus valores.
           </span>
         </button>
         <button
