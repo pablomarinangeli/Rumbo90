@@ -5,9 +5,13 @@ import { useCicloActivo } from './lib/datos'
 import { supabaseConfigurado } from './lib/supabase'
 import Ajustes from './pages/Ajustes'
 import Bienvenida from './pages/Bienvenida'
+import HabitoForm from './pages/HabitoForm'
+import Habitos from './pages/Habitos'
 import Hoy from './pages/Hoy'
 import Login from './pages/Login'
 import Metas from './pages/Metas'
+import ObjetivoDetalle from './pages/ObjetivoDetalle'
+import ObjetivoForm from './pages/ObjetivoForm'
 import Revision from './pages/Revision'
 import SinConfigurar from './pages/SinConfigurar'
 
@@ -26,6 +30,12 @@ function AppConSesion() {
           <>
             <Route index element={<Hoy ciclo={ciclo} />} />
             <Route path="metas" element={<Metas ciclo={ciclo} />} />
+            <Route path="metas/nueva" element={<ObjetivoForm ciclo={ciclo} />} />
+            <Route path="metas/:id" element={<ObjetivoDetalle />} />
+            <Route path="metas/:id/editar" element={<ObjetivoForm ciclo={ciclo} />} />
+            <Route path="habitos" element={<Habitos ciclo={ciclo} />} />
+            <Route path="habitos/nuevo" element={<HabitoForm ciclo={ciclo} />} />
+            <Route path="habitos/:id" element={<HabitoForm ciclo={ciclo} />} />
           </>
         ) : (
           <Route index element={<Bienvenida alCrear={() => void recargar()} />} />
