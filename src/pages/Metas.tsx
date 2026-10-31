@@ -10,6 +10,7 @@ export default function Metas({ ciclo }: { ciclo: Ciclo }) {
   const [objetivos, setObjetivos] = useState<Objetivo[]>([])
   const [mediciones, setMediciones] = useState<Medicion[]>([])
   const [hitos, setHitos] = useState<Hito[]>([])
+  const [conHabitos, setConHabitos] = useState<Set<string> | null>(null)
 
   useEffect(() => {
     void (async () => {
@@ -22,10 +23,12 @@ export default function Metas({ ciclo }: { ciclo: Ciclo }) {
       setObjetivos(objs)
       const ids = objs.map((x) => x.id)
       if (!ids.length) return
-      const [m, h] = await Promise.all([
+      const [m, h, v] = await Promise.all([
         supabase.from('mediciones').select('id, objetivo_id, fecha, valor, unidad, nota').in('objetivo_id', ids),
         supabase.from('hitos').select('id, objetivo_id, titulo, fecha, estado, orden').in('objetivo_id', ids),
+        supabase.from('habitos_objetivos').select('objetivo_id').in('objetivo_id', ids),
       ])
+      setConHabitos(new Set((v.data ?? []).map((x) => x.objetivo_id as string)))
       setMediciones(m.data ?? [])
       setHitos(h.data ?? [])
     })()
@@ -51,6 +54,9 @@ export default function Metas({ ciclo }: { ciclo: Ciclo }) {
                     <Link to={`/metas/${o.id}`} className="block rounded-xl border border-slate-800 p-4 active:bg-slate-900">
                       <p className="font-medium">{o.titulo}</p>
                       <p className="mt-1 text-sm text-slate-400">{avance.detalle}</p>
+                      {conHabitos && !conHabitos.has(o.id) && (
+                        <p className="mt-1 text-xs text-violet-300">💡 Sin hábitos todavía: tocá para ver sugerencias</p>
+                      )}
                       <div className="mt-3">
                         <BarraAvance valor={avance.porcentaje} />
                       </div>
