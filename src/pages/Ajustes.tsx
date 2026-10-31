@@ -19,6 +19,17 @@ export default function Ajustes() {
         </button>
       </section>
 
+      <section className="mt-4 rounded-xl border border-slate-800 p-4">
+        <h2 className="font-semibold">Tono del coach</h2>
+        <div className="mt-3 space-y-2 text-sm">
+          <p className="rounded-lg border border-emerald-500 px-3 py-2 text-emerald-400">
+            Motivador: te festeja y te avisa cuando venís mal, siempre en positivo
+          </p>
+          <p className="rounded-lg border border-slate-800 px-3 py-2 text-slate-500">Exigente: más directo (próximamente)</p>
+          <p className="rounded-lg border border-slate-800 px-3 py-2 text-slate-500">Roast me: sin filtro (próximamente)</p>
+        </div>
+      </section>
+
       {!instalada && (
         <section className="mt-4 rounded-xl border border-slate-800 p-4">
           <h2 className="font-semibold">Instalar la app</h2>

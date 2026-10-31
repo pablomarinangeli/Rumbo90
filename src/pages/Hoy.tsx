@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AvisoInsignias, MensajesCoach, TarjetaNivel } from '../components/Coach'
 import HabitosAReducir from '../components/HabitosAReducir'
 import { BarraAvance } from '../components/ui'
 import {
@@ -12,6 +13,7 @@ import {
   type EstadoCompromiso,
   type Habito,
 } from '../lib/datos'
+import { calcularLogros, useHistorial } from '../lib/logros'
 import { supabase } from '../lib/supabase'
 
 const OPCIONES: { estado: EstadoCompromiso; etiqueta: string; clase: string }[] = [
@@ -31,6 +33,8 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
   const [fallidosAyer, setFallidosAyer] = useState<string[]>([])
   const hoy = fechaISO()
   const { dia, total } = diaDelCiclo(ciclo)
+  const { historial, recargar: recargarHistorial } = useHistorial(ciclo)
+  const logros = historial ? calcularLogros(historial) : null
   const fechaTexto = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   const cargar = useCallback(async () => {
@@ -43,7 +47,8 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
     setHabitos((h.data ?? []) as Habito[])
     setCompromisos((c.data ?? []) as Compromiso[])
     setFallidosAyer((a.data ?? []).map((x) => x.habito_id).filter((x): x is string => Boolean(x)))
-  }, [ciclo.id, hoy])
+    void recargarHistorial()
+  }, [ciclo.id, hoy, recargarHistorial])
 
   useEffect(() => {
     void cargar()
@@ -95,6 +100,10 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
         Día {dia} de {total} · {ciclo.nombre}
       </p>
 
+      {logros && <TarjetaNivel logros={logros} />}
+      {logros && <MensajesCoach logros={logros} />}
+      {logros && <AvisoInsignias logros={logros} />}
+
       {cumplimiento != null && (
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-sm">
@@ -110,12 +119,18 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
           const c = compromisoDe(h)
           const estado = c?.estado ?? 'pendiente'
           const recuperar = fallidosAyer.includes(h.id) && estado === 'pendiente'
+          const rachaH = logros?.rachasHabito.get(h.id)
           return (
             <li key={h.id} className="rounded-xl border border-slate-800 p-4">
               <div className="flex items-start gap-3">
                 <span className="w-12 shrink-0 pt-0.5 text-sm tabular-nums text-slate-500">{h.hora?.slice(0, 5) ?? '—'}</span>
                 <div className="min-w-0 flex-1">
-                  <p className={`font-medium ${estado === 'realizado' ? 'text-slate-500 line-through' : ''}`}>{h.titulo}</p>
+                  <p className={`font-medium ${estado === 'realizado' ? 'text-slate-500 line-through' : ''}`}>
+                    {h.titulo}
+                    {rachaH && rachaH.actual >= 2 && (
+                      <span className="ml-2 text-xs font-normal text-orange-300">🔥 {rachaH.actual}</span>
+                    )}
+                  </p>
                   {h.version_minima && (
                     <p className={`mt-0.5 text-sm ${recuperar ? 'text-amber-300' : 'text-slate-500'}`}>
                       {recuperar ? 'Ayer no salió. Hoy alcanza con: ' : 'Versión mínima: '}
@@ -154,7 +169,7 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
         )}
       </ul>
 
-      <HabitosAReducir habitos={habitos.filter((h) => h.tipo === 'reducir')} />
+      <HabitosAReducir habitos={habitos.filter((h) => h.tipo === 'reducir')} alCambiar={recargarHistorial} />
     </div>
   )
 }

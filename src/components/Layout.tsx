@@ -4,7 +4,7 @@ const secciones = [
   { to: '/', etiqueta: 'Hoy' },
   { to: '/metas', etiqueta: 'Metas' },
   { to: '/habitos', etiqueta: 'Hábitos' },
-  { to: '/revision', etiqueta: 'Revisión' },
+  { to: '/logros', etiqueta: 'Logros' },
   { to: '/ajustes', etiqueta: 'Ajustes' },
 ]
 

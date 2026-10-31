@@ -40,6 +40,7 @@ export interface Habito {
   tipo: 'construir' | 'reducir'
   /** Solo para reducir: máximo por semana (0 = eliminar) */
   limite_semana: number | null
+  created_at: string
 }
 
 export interface RegistroHabito {
@@ -78,7 +79,7 @@ export interface Hito {
   orden: number
 }
 
-export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo, tipo, limite_semana'
+export const HABITO_CAMPOS = 'id, titulo, frecuencia, hora, duracion_min, version_minima, activo, tipo, limite_semana, created_at'
 export const OBJETIVO_CAMPOS =
   'id, codigo, titulo, descripcion, tipo, unidad, valor_inicial, valor_meta, dimension_id'
 
