@@ -163,8 +163,8 @@ export default function Hoy({ ciclo }: { ciclo: Ciclo }) {
         })}
         {delDia.length === 0 && (
           <li className="rounded-xl border border-dashed border-slate-700 p-4 text-slate-400">
-            No hay hábitos para hoy. <Link to="/habitos/nuevo" className="text-emerald-400">Creá un hábito</Link> y va a
-            aparecer acá los días que corresponda.
+            No hay hábitos para hoy. <Link to="/coach" className="text-violet-300">Armalos con el coach</Link> o{' '}
+            <Link to="/habitos/nuevo" className="text-emerald-400">creá uno</Link> y va a aparecer acá los días que corresponda.
           </li>
         )}
       </ul>

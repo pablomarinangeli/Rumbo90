@@ -37,6 +37,10 @@ export default function Metas({ ciclo }: { ciclo: Ciclo }) {
   return (
     <div>
       <h1 className="text-2xl font-bold">Mis metas</h1>
+      <Link to="/coach" className="mt-4 block rounded-xl border border-violet-400/40 bg-violet-400/5 p-4 active:bg-violet-400/10">
+        <span className="font-semibold">🤖 Armar mis metas con el coach</span>
+        <span className="block text-sm text-slate-400">Contale tu situación y negocien juntos qué metas y hábitos trabajar.</span>
+      </Link>
       {dimensiones.map((d) => {
         const propios = objetivos.filter((o) => o.dimension_id === d.id)
         return (

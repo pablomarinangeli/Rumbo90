@@ -39,6 +39,17 @@ Cada push a `main` publica la app en <https://pablomarinangeli.github.io/Rumbo90
 - **Android (Samsung):** abrir la URL en Chrome o Samsung Internet → menú → *Instalar aplicación*.
 - **iPhone:** abrir la URL en Safari → Compartir → *Agregar a inicio*. Las notificaciones en iPhone requieren iOS 16.4 o posterior y la app agregada a inicio.
 
+## 5. Coach con IA (opcional)
+
+El coach corre en una Edge Function de Supabase (`supabase/functions/coach`). La clave de Anthropic queda guardada en Supabase y nunca llega al navegador.
+
+1. **Clave de Anthropic:** en <https://console.anthropic.com> → *API Keys* → crear una clave, y cargar crédito en *Billing*.
+2. **Secretos en Supabase:** *Edge Functions → Secrets* (o *Project Settings → Edge Functions*) y agregar:
+   - `ANTHROPIC_API_KEY`: la clave del paso 1.
+   - `COACH_EMAILS`: los mails de Google habilitados para usar el coach, separados por coma. Cualquier otra cuenta recibe "no habilitado", así nadie más gasta tu crédito.
+3. **Token para publicar la función:** en Supabase, *Account → Access Tokens* → generar uno. En GitHub, *Settings → Secrets and variables → Actions → New repository secret* con el nombre `SUPABASE_ACCESS_TOKEN`.
+4. **Publicar:** cada push a `main` que toque `supabase/functions/` corre el workflow *Publicar funciones de Supabase*. También se puede correr a mano desde *Actions*.
+
 ## Desarrollo local
 
 ```bash
